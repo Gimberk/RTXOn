@@ -5,7 +5,7 @@
 
 #include "Walnut/Timer.h"
 
-#include "../Renderer.h"
+#include "../src/Renderer.h"
 
 using namespace Walnut;
 
