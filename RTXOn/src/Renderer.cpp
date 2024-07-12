@@ -47,21 +47,39 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 	Ray ray(activeCamera->GetPosition(), 
 		activeCamera->GetRayDirections()[x + y * finalImage->GetWidth()]);
 
-	HitRecord record = TraceRay(ray);
-	if (record.hitDist < 0) {
-		float bgIntensity = 0.5f * (glm::normalize(ray.direction).y +
-			1.0f);
-		glm::vec3 bgColor(1.0f - bgIntensity * glm::vec3(1.0f) +
-			bgIntensity * glm::vec3(0.5f, 0.7f, 1.0f));
-		return glm::vec4(bgColor, 1.0f);
-	}
+	glm::vec3 color(0.0f);
+	const int bounceCount = 10;
+	float multiplier = 1.0f;
 
-	glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -1.0f, -1.0f));
-	float lightIntensity = glm::max(0.0f, glm::dot(-lightDir, record.worldNormal));
-	glm::vec3 hitColor = activeScene->spheres[record.objIndex].albedo;
-	//hitColor = normal * 0.5f + 0.5f; // color by normals
-	hitColor *= lightIntensity;
-	return glm::vec4(hitColor, 1.0f);
+	for (int i = 0; i < bounceCount; i++) {
+		HitRecord record = TraceRay(ray);
+		if (record.hitDist < 0) {
+			color += glm::vec3(0.6f, 0.7f, 0.9f) * multiplier;
+			break;
+			float bgIntensity = 0.5f * (glm::normalize(ray.direction).y +
+				1.0f);
+			glm::vec3 bgColor(1.0f - bgIntensity * glm::vec3(1.0f) +
+				bgIntensity * glm::vec3(0.5f, 0.7f, 1.0f));
+			color += bgColor * multiplier;
+			multiplier *= 0.5f;
+			break;
+		}
+
+		const Sphere& sphere = activeScene->spheres[record.objIndex];
+		const Material& material = activeScene->materials[sphere.matIndex];
+		glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -1.0f, -1.0f));
+		float lightIntensity = glm::max(0.0f, glm::dot(-lightDir, record.worldNormal));
+		glm::vec3 hitColor = material.albedo;
+		//hitColor = normal * 0.5f + 0.5f; // color by normals
+		hitColor *= lightIntensity;
+		color += hitColor * multiplier;
+		multiplier *= 0.5f;
+
+		ray.origin = record.worldPosition + record.worldNormal * 0.0001f;
+		ray.direction = glm::reflect(ray.direction, record.worldNormal + 
+			material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+	}
+	return glm::vec4(color, 1.0f);
 }
 
 Renderer::HitRecord Renderer::TraceRay(const Ray& ray) {
@@ -114,7 +132,7 @@ Renderer::HitRecord Renderer::TraceRay(const Ray& ray) {
 				(-b - std::sqrt(discriminant)) / (2.0f * a),
 				(-b + std::sqrt(discriminant)) / (2.0f * a)
 		};
-		if (hits[0] >= 0.0f && hits[0] < closestDist) {
+		if (hits[0] > 0.0f && hits[0] < closestDist) {
 			closestDist = hits[0];
 			closest = (int)i;
 		}
@@ -124,7 +142,8 @@ Renderer::HitRecord Renderer::TraceRay(const Ray& ray) {
 	return ClosestHit(ray, closestDist, closest);
 }
 
-Renderer::HitRecord Renderer::ClosestHit(const Ray& ray, float hitDist, int objIndex) {
+Renderer::HitRecord Renderer::ClosestHit(const Ray& ray, float hitDist, 
+														 int objIndex) {
 	HitRecord record;
 	record.hitDist = hitDist;
 	record.objIndex = objIndex;
