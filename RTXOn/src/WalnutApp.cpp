@@ -12,6 +12,15 @@ using namespace Walnut;
 class ExampleLayer : public Walnut::Layer
 {
 public:
+	ExampleLayer() : camera(45.0f, 0.1f, 100.0f) {
+		camera.SetMouseSens(0.004f);
+		camera.SetMoveSpeed(4.6f);
+	}
+
+	virtual void OnUpdate(float ts) override {
+		camera.OnUpdate(ts);
+	}
+
 	virtual void OnUIRender() override
 	{
 		ImGui::Begin("Settings");
@@ -41,12 +50,14 @@ public:
 		Timer timer;
 
 		renderer.OnResize(viewportWidth, viewportHeight);
-		renderer.Render();
+		camera.OnResize(viewportWidth, viewportHeight);
+		renderer.Render(camera);
 		renderTime = timer.ElapsedMillis();
 	}
 private:
 	Renderer renderer;
-	
+	Camera camera;
+
 	uint32_t viewportWidth = 0, viewportHeight = 0;
 
 	float renderTime = 0.0f;
