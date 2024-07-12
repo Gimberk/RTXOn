@@ -15,7 +15,7 @@ class ExampleLayer : public Walnut::Layer
 {
 public:
 	ExampleLayer() : camera(45.0f, 0.1f, 100.0f) {
-		camera.SetMouseSens(0.004f);
+		camera.SetMouseSens(0.009f);
 		camera.SetMoveSpeed(4.6f);
 
 		{
