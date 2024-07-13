@@ -46,7 +46,7 @@ public:
 	}
 
 	virtual void OnUpdate(float ts) override {
-		camera.OnUpdate(ts);
+		if (camera.OnUpdate(ts)) renderer.ResetFrameIndex();
 	}
 
 	virtual void OnUIRender() override
@@ -55,6 +55,9 @@ public:
 		ImGui::Text("Render took: %0.2fms", renderTime);
 		if (ImGui::Button("Render")) renderFrame = 1;
 		if (ImGui::Button("Pause")) renderFrame = 0;
+
+		ImGui::Checkbox("Accumulate", &renderer.GetSettings().accumulate);
+		if (ImGui::Button("Reset")) renderer.ResetFrameIndex();
 		ImGui::End();
 
 		ImGui::Begin("Scene");

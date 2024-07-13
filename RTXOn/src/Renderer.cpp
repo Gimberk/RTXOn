@@ -3,9 +3,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <cmath>
-#include <iostream>
-#include <iomanip>
+
+#include <execution>
 
 namespace Utils {
 	static uint32_t ToRGBA(const glm::vec4& color) {
@@ -27,20 +26,63 @@ void Renderer::OnResize(const uint32_t width, const uint32_t height)
 
 	delete[] imageData;
 	imageData = new uint32_t[width * height];
+
+	delete[] accumulationData;
+	accumulationData = new glm::vec4[width * height];
+
+	imageRowIterator.resize(width);
+	imageColumnIterator.resize(height);
+	for (uint32_t i = 0; i < width; i++) imageRowIterator[i] = i;
+	for (uint32_t i = 0; i < height; i++) imageColumnIterator[i] = i;
 }
 
 void Renderer::Render(const Scene& scene, const Camera& camera) {
 	activeScene = &scene;
 	activeCamera = &camera;
 
+	if (frameIndex == 1) 
+		memset(accumulationData, 0, finalImage->GetWidth() 
+			* finalImage->GetHeight() * sizeof(glm::vec4));
+
+#if 1
+	std::for_each(std::execution::par, imageColumnIterator.begin(), 
+		imageColumnIterator.end(),
+		[this](uint32_t y) {
+			std::for_each(std::execution::par, imageRowIterator.begin(), 
+				imageRowIterator.end(),
+				[this, y](uint32_t x) {
+					glm::vec4 color = PerPixel(x, y);
+					accumulationData[y * finalImage->GetWidth() + x] += color;
+
+					glm::vec4 accumulatedColor = accumulationData[y * finalImage->
+						GetWidth() + x];
+					accumulatedColor /= (float)frameIndex;
+
+					accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), 
+						glm::vec4(1.0f));
+					imageData[y * finalImage->GetWidth() + x] = 
+						Utils::ToRGBA(accumulatedColor);
+				});
+		});
+#else
 	for (uint32_t y = 0; y < finalImage->GetHeight(); y++) {
 		for (uint32_t x = 0; x < finalImage->GetWidth(); x++) {
 			glm::vec4 color = PerPixel(x, y);
-			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-			imageData[y * finalImage->GetWidth() + x] = Utils::ToRGBA(color);
+			accumulationData[y * finalImage->GetWidth() + x] += color;
+
+			glm::vec4 accumulatedColor = accumulationData[y * finalImage->GetWidth() + x];
+			accumulatedColor /= (float)frameIndex;
+
+			accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), 
+				glm::vec4(1.0f));
+			imageData[y * finalImage->GetWidth() + x] = Utils::ToRGBA(accumulatedColor);
 		}
 	}
+#endif
 	finalImage->SetData(imageData);
+
+	if (settings.accumulate) frameIndex++;
+	else if (frameIndex != 1) frameIndex = 1;
 }
 
 glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
