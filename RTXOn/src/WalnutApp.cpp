@@ -20,13 +20,18 @@ public:
 
 		Material& pink = scene.materials.emplace_back();
 		pink.albedo = glm::vec3(1.0f, 0.0f, 1.0f);
-		pink.roughness = 0.022f;
+		pink.roughness = 0.0f;
 		pink.metallicness = 0.0f;
 
 		Material& blue = scene.materials.emplace_back();
 		blue.albedo = glm::vec3(0.2f, 0.3f, 1.0f);
-		blue.roughness = 0.06f;
+		blue.roughness = 0.0f;
 		blue.metallicness = 0.0f;
+
+		Material& orange = scene.materials.emplace_back();
+		orange.albedo = glm::vec3(0.8f, 0.5f, 0.2f);
+		orange.roughness = 0.0f;
+		orange.metallicness = 0.0f;
 
 		{
 			Sphere sphere;
@@ -41,6 +46,14 @@ public:
 			sphere.position = glm::vec3(0.0f, -101.0f, 0.0f);
 			sphere.radius = 100.0f;
 			sphere.matIndex = 1; // bleu
+			scene.spheres.push_back(sphere);
+		}
+
+		{
+			Sphere sphere;
+			sphere.position = glm::vec3(2.0f, 0.0f, 0.0f);
+			sphere.radius = 1.0f;
+			sphere.matIndex = 2; // bright stuff
 			scene.spheres.push_back(sphere);
 		}
 	}
@@ -82,6 +95,12 @@ public:
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
 			ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Metallicness", &material.metallicness, 0.01f, 0.0f, 1.0f);
+			ImGui::Checkbox("Light?", &material.light);
+			if (material.light) {
+				ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.emissionColor));
+				ImGui::DragFloat("Emissiveness", &material.emissionPower, 0.05f, 0.0f, 
+																			FLT_MAX);
+			}
 
 			ImGui::Separator();
 			

@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <glm/gtc/random.hpp>
+
 #include <execution>
 
 namespace Utils {
@@ -89,39 +91,38 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 	Ray ray(activeCamera->GetPosition(), 
 		activeCamera->GetRayDirections()[x + y * finalImage->GetWidth()]);
 
-	glm::vec3 color(0.0f);
+	glm::vec3 light(0.0f);
 	const int bounceCount = 10;
-	float multiplier = 1.0f;
+	glm::vec3 throughput(1.0f);
 
 	for (int i = 0; i < bounceCount; i++) {
 		HitRecord record = TraceRay(ray);
 		if (record.hitDist < 0) {
-			color += glm::vec3(0.6f, 0.7f, 0.9f) * multiplier;
-			break;
-			float bgIntensity = 0.5f * (glm::normalize(ray.direction).y +
-				1.0f);
-			glm::vec3 bgColor(1.0f - bgIntensity * glm::vec3(1.0f) +
-				bgIntensity * glm::vec3(0.5f, 0.7f, 1.0f));
-			color += bgColor * multiplier;
-			multiplier *= 0.5f;
+			light += glm::vec3(0.6f, 0.7f, 0.9f) * throughput;
 			break;
 		}
 
 		const Sphere& sphere = activeScene->spheres[record.objIndex];
 		const Material& material = activeScene->materials[sphere.matIndex];
-		glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -1.0f, -1.0f));
-		float lightIntensity = glm::max(0.0f, glm::dot(-lightDir, record.worldNormal));
-		glm::vec3 hitColor = material.albedo;
-		//hitColor = normal * 0.5f + 0.5f; // color by normals
-		hitColor *= lightIntensity;
-		color += hitColor * multiplier;
-		multiplier *= 0.5f;
+
+		throughput *= material.albedo;
+		if (material.light) light += material.GetEmission();
 
 		ray.origin = record.worldPosition + record.worldNormal * 0.0001f;
-		ray.direction = glm::reflect(ray.direction, record.worldNormal + 
-			material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+
+		if (material.metallicness == 0.0f && material.roughness == 0.0f)
+			ray.direction = glm::reflect(ray.direction, record.worldNormal +
+					material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+		else {
+			glm::vec3 reflected = glm::reflect(ray.direction, record.worldNormal);
+			glm::vec3 diffuse = glm::normalize(record.worldNormal + glm::sphericalRand(1.0f));
+
+			ray.direction = glm::normalize(glm::mix(diffuse, reflected, material.metallicness));	  
+			ray.direction = glm::normalize(ray.direction + material.roughness *
+				Walnut::Random::InUnitSphere());
+		}																								  
 	}
-	return glm::vec4(color, 1.0f);
+	return glm::vec4(light, 1.0f);
 }
 
 Renderer::HitRecord Renderer::TraceRay(const Ray& ray) {
