@@ -20,17 +20,14 @@ public:
 
 		Material& pink = scene.materials.emplace_back();
 		pink.albedo = glm::vec3(1.0f, 0.0f, 1.0f);
-		pink.roughness = 0.0f;
 		pink.metallicness = 0.0f;
 
 		Material& blue = scene.materials.emplace_back();
 		blue.albedo = glm::vec3(0.2f, 0.3f, 1.0f);
-		blue.roughness = 0.0f;
 		blue.metallicness = 0.0f;
 
 		Material& orange = scene.materials.emplace_back();
 		orange.albedo = glm::vec3(0.8f, 0.5f, 0.2f);
-		orange.roughness = 0.0f;
 		orange.metallicness = 0.0f;
 
 		{
@@ -70,6 +67,7 @@ public:
 		if (ImGui::Button("Pause")) renderFrame = 0;
 
 		ImGui::Checkbox("Accumulate", &renderer.GetSettings().accumulate);
+
 		if (ImGui::Button("Reset")) renderer.ResetFrameIndex();
 		ImGui::End();
 
@@ -93,8 +91,9 @@ public:
 
 			Material& material = scene.materials[i];
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
-			ImGui::DragFloat("Roughness", &material.roughness, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Metallicness", &material.metallicness, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Specular Probability", 
+				&material.specularProbability, 0.01f, 0.0f, 1.0f);
 			ImGui::Checkbox("Light?", &material.light);
 			if (material.light) {
 				ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.emissionColor));

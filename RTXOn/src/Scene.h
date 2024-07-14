@@ -5,12 +5,14 @@
 
 struct Material {
 	glm::vec3 albedo{ 1.0f };
-	float roughness = 1.0f;
-	float metallicness = 0.0f;
 	glm::vec3 emissionColor{ 0.0f };
-	float emissionPower = 0.0f;
+	glm::vec3 specularColor{ 1.0f };
+
+	float metallicness = 0.0f;
+	float specularProbability = 1.0f;
 
 	bool light = false;
+	float emissionPower = 0.0f;
 
 	glm::vec3 GetEmission() const { return emissionColor * emissionPower; }
 };

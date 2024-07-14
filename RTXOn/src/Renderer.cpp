@@ -14,6 +14,26 @@ namespace Utils {
 			b = (uint8_t)(color.b * 255.0f), a = (uint8_t)(color.a * 255.0f);
 		return (a << 24) | (b << 16) | (g << 8) | r;
 	}
+
+	// for fun, but most importantly, fast, random numbers!
+	static uint32_t PCGHash(uint32_t input) {
+		uint32_t state = input * 747796405u + 2891336453u;
+		uint32_t word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+		return (word >> 22u) ^ word;
+	}
+
+	static float RandFloat(uint32_t& seed) {
+		seed = PCGHash(seed);
+		return (float)seed / (float)std::numeric_limits<uint32_t>::max();
+	}
+
+	static glm::vec3 RandInUnitSphere(uint32_t& seed) {
+		return glm::normalize(glm::vec3(
+			RandFloat(seed) * 2.0f - 1.0f, 
+			RandFloat(seed) * 2.0f - 1.0f, 
+			RandFloat(seed) * 2.0f - 1.0f
+		));
+	}
 }
 
 void Renderer::OnResize(const uint32_t width, const uint32_t height)
@@ -95,7 +115,12 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 	const int bounceCount = 10;
 	glm::vec3 throughput(1.0f);
 
+	uint32_t seed = x + y * finalImage->GetWidth();
+	seed *= frameIndex;
+
 	for (int i = 0; i < bounceCount; i++) {
+		seed += i;
+
 		HitRecord record = TraceRay(ray);
 		if (record.hitDist < 0) {
 			light += glm::vec3(0.6f, 0.7f, 0.9f) * throughput;
@@ -105,22 +130,20 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 		const Sphere& sphere = activeScene->spheres[record.objIndex];
 		const Material& material = activeScene->materials[sphere.matIndex];
 
-		throughput *= material.albedo;
-		if (material.light) light += material.GetEmission();
-
 		ray.origin = record.worldPosition + record.worldNormal * 0.0001f;
 
-		if (material.metallicness == 0.0f && material.roughness == 0.0f)
-			ray.direction = glm::reflect(ray.direction, record.worldNormal +
-					material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
-		else {
-			glm::vec3 reflected = glm::reflect(ray.direction, record.worldNormal);
-			glm::vec3 diffuse = glm::normalize(record.worldNormal + glm::sphericalRand(1.0f));
+		//ray.direction = glm::reflect(ray.direction, record.worldNormal +
+		//					material.roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+		glm::vec3 specular = glm::reflect(ray.direction, record.worldNormal);
+		glm::vec3 diffuse = glm::normalize(record.worldNormal + glm::sphericalRand(1.0f));
 
-			ray.direction = glm::normalize(glm::mix(diffuse, reflected, material.metallicness));	  
-			ray.direction = glm::normalize(ray.direction + material.roughness *
-				Walnut::Random::InUnitSphere());
-		}																								  
+		bool specularReflection = material.specularProbability >= Utils::RandFloat(seed);
+
+		ray.direction =
+			glm::mix(diffuse, specular, material.metallicness * specularReflection);
+
+		throughput *= material.albedo;
+		if (material.light) light += material.GetEmission() * throughput; 
 	}
 	return glm::vec4(light, 1.0f);
 }
