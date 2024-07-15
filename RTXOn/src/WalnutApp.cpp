@@ -5,6 +5,7 @@
 #include "Walnut/Timer.h"
 
 #include "Renderer.h"
+#include "primitives/Quad.h"
 #include "primitives/Sphere.h"
 #include "primitives/Triangle.h"
 
@@ -15,18 +16,77 @@ using namespace Walnut;
 class ExampleLayer : public Walnut::Layer
 {
 public:
-	ExampleLayer() : camera(45.0f, 0.1f, 100.0f) {
-		camera.SetMouseSens(0.009f);
-		camera.SetMoveSpeed(4.6f);
+	ExampleLayer() : camera(40.0f, 0.1f, 100.0f) {
+		//camera.SetMouseSens(0.009f);
+		//camera.SetMoveSpeed(4.6f);
+		// Materials
 
+		//Material& sphere = scene.materials.emplace_back();
+		//sphere.albedo = glm::vec3(0.0f);
+		//sphere.metallicness = 0.7843f;
+
+		//Material& purple = scene.materials.emplace_back();
+		//purple.albedo = glm::vec3(0.6f, 0.0f, 0.7f);
+		//purple.metallicness = 0.0f;
+
+		//// Objects
+		//{
+		//	Sphere sphere(glm::vec3(0.0f), 1.234f);
+		//	sphere.matIndex = 0;
+		//	scene.objects.push_back(std::make_shared<Sphere>(sphere));
+		//}
+
+		//{
+		//	Sphere sphere(glm::vec3(2.75f, 0.0f, 0.0f), 1.234f);
+		//	sphere.matIndex = 1;
+		//	scene.objects.push_back(std::make_shared<Sphere>(sphere));
+		//}
+
+		camera.SetMouseSens(0.01);
+		camera.SetMoveSpeed(40.0f);
 		Material& sphere = scene.materials.emplace_back();
-		sphere.albedo = glm::vec3(0.0f, 1.0f, 0.0f);
+		sphere.albedo = glm::vec3(0.12f, 0.45f, 0.15f);
 		sphere.metallicness = 0.0f;
-
+		Material& d = scene.materials.emplace_back();
+		d.albedo = glm::vec3(0.65f, 0.05f, 0.05f);
+		d.metallicness = 0.0f;
+		Material& f = scene.materials.emplace_back();
+		f.albedo = glm::vec3(1.0f);
+		f.emissionPower = 15.0f;
+		f.light = true;
+		f.emissionColor = glm::vec3(1.0f);
+		Material& c = scene.materials.emplace_back();
+		c.albedo = glm::vec3(0.73f);
+		c.metallicness = 0.0f;
 		{
-			Sphere sphere(glm::vec3(0.0f, 2.0f, -3.0f), 0.1f);
-			sphere.matIndex = 0;
-			scene.objects.push_back(std::make_shared<Sphere>(sphere));
+			Quad quad(glm::vec3(555,0,0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
+			quad.matIndex = 0;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
+			quad.matIndex = 1;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+		Quad quad(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105));
+			quad.matIndex = 2;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
 		}
 	}
 
@@ -56,7 +116,7 @@ public:
 			ImGui::PushID(i);
 			switch (scene.objects[i]->GetType()) {
 			case PrimitiveType::SPHERE:
-				std::shared_ptr<Sphere> sphere = 
+				std::shared_ptr<Sphere> sphere =
 					std::dynamic_pointer_cast<Sphere>(scene.objects[i]);
 				ImGui::DragFloat3("Position", glm::value_ptr(sphere->position), 0.1f);
 				ImGui::DragFloat("Radius", &sphere->radius, 0.1f);
@@ -75,17 +135,17 @@ public:
 			Material& material = scene.materials[i];
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
 			ImGui::DragFloat("Metallicness", &material.metallicness, 0.01f, 0.0f, 1.0f);
-			ImGui::DragFloat("Specular Probability", 
+			ImGui::DragFloat("Specular Probability",
 				&material.specularProbability, 0.01f, 0.0f, 1.0f);
 			ImGui::Checkbox("Light?", &material.light);
 			if (material.light) {
 				ImGui::ColorEdit3("Emission Color", glm::value_ptr(material.emissionColor));
-				ImGui::DragFloat("Emissiveness", &material.emissionPower, 0.05f, 0.0f, 
-																			FLT_MAX);
+				ImGui::DragFloat("Emissiveness", &material.emissionPower, 0.05f, 0.0f,
+					FLT_MAX);
 			}
 
 			ImGui::Separator();
-			
+
 			ImGui::PopID();
 		}
 		ImGui::End();
@@ -98,14 +158,15 @@ public:
 
 		std::shared_ptr<Image> img = renderer.GetFinalImage();
 		if (img) ImGui::Image(img->GetDescriptorSet(),
-				   { (float)img->GetWidth(), 
-					 (float)img->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
+			{ (float)img->GetWidth(),
+			  (float)img->GetHeight() }, ImVec2(0, 1), ImVec2(1, 0));
 
 		ImGui::End();
 		ImGui::PopStyleVar();
 
 		if (renderFrame) Render();
 	}
+
 
 	void Render() {
 		Timer timer;
@@ -114,6 +175,10 @@ public:
 		camera.OnResize(viewportWidth, viewportHeight);
 		renderer.Render(scene, camera);
 		renderTime = timer.ElapsedMillis();
+
+		for (int i = 0; i < scene.objects.size(); i++) {
+			scene.objects[i]->OnRender();
+		}
 	}
 private:
 	Renderer renderer;

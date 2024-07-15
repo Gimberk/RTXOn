@@ -29,8 +29,8 @@ namespace Utils {
 
 	static glm::vec3 RandInUnitSphere(uint32_t& seed) {
 		return glm::normalize(glm::vec3(
-			RandFloat(seed) * 2.0f - 1.0f, 
-			RandFloat(seed) * 2.0f - 1.0f, 
+			RandFloat(seed) * 2.0f - 1.0f,
+			RandFloat(seed) * 2.0f - 1.0f,
 			RandFloat(seed) * 2.0f - 1.0f
 		));
 	}
@@ -45,11 +45,11 @@ namespace Utils {
 void Renderer::OnResize(const uint32_t width, const uint32_t height)
 {
 	if (finalImage) {
-		if (finalImage->GetWidth() == width && finalImage->GetHeight() == 
+		if (finalImage->GetWidth() == width && finalImage->GetHeight() ==
 			height) return;
 		finalImage->Resize(width, height);
 	}
-	else finalImage = std::make_shared<Walnut::Image>(width, height, 
+	else finalImage = std::make_shared<Walnut::Image>(width, height,
 		Walnut::ImageFormat::RGBA);
 
 	delete[] imageData;
@@ -68,15 +68,15 @@ void Renderer::Render(const Scene& scene, const Camera& camera) {
 	activeScene = &scene;
 	activeCamera = &camera;
 
-	if (frameIndex == 1) 
-		memset(accumulationData, 0, finalImage->GetWidth() 
+	if (frameIndex == 1)
+		memset(accumulationData, 0, finalImage->GetWidth()
 			* finalImage->GetHeight() * sizeof(glm::vec4));
 
 #if 1
-	std::for_each(std::execution::par, imageColumnIterator.begin(), 
+	std::for_each(std::execution::par, imageColumnIterator.begin(),
 		imageColumnIterator.end(),
 		[this](uint32_t y) {
-			std::for_each(std::execution::par, imageRowIterator.begin(), 
+			std::for_each(std::execution::par, imageRowIterator.begin(),
 				imageRowIterator.end(),
 				[this, y](uint32_t x) {
 					glm::vec4 color = PerPixel(x, y);
@@ -89,9 +89,9 @@ void Renderer::Render(const Scene& scene, const Camera& camera) {
 						GetWidth() + x];
 					accumulatedColor /= (float)frameIndex;
 
-					accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), 
+					accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f),
 						glm::vec4(1.0f));
-					imageData[y * finalImage->GetWidth() + x] = 
+					imageData[y * finalImage->GetWidth() + x] =
 						Utils::ToRGBA(accumulatedColor);
 				});
 		});
@@ -104,7 +104,7 @@ void Renderer::Render(const Scene& scene, const Camera& camera) {
 			glm::vec4 accumulatedColor = accumulationData[y * finalImage->GetWidth() + x];
 			accumulatedColor /= (float)frameIndex;
 
-			accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), 
+			accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f),
 				glm::vec4(1.0f));
 			imageData[y * finalImage->GetWidth() + x] = Utils::ToRGBA(accumulatedColor);
 		}
@@ -146,7 +146,7 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 
 		bool specularReflection = material.specularProbability >= Utils::RandFloat(seed);
 
-		ray.direction = glm::mix(diffuse, specular, material.metallicness * 
+		ray.direction = glm::mix(diffuse, specular, material.metallicness *
 			specularReflection);
 
 		throughput *= material.albedo;
@@ -189,8 +189,8 @@ HitRecord Renderer::TraceRay(const Ray& ray) {
 	HitRecord record;
 
 	for (size_t i = 0; i < activeScene->objects.size(); i++) {
-		if (activeScene->objects[i]->GetType() == PrimitiveType::SPHERE){
-			HitRecord bBoxRecord = 
+		if (activeScene->objects[i]->GetType() == PrimitiveType::SPHERE) {
+			HitRecord bBoxRecord =
 				activeScene->objects[i]->BoundingBox().Intersect(ray, false);
 			if (bBoxRecord.hitDist == -1) continue;
 		}

@@ -7,7 +7,7 @@
 #include <iostream>
 
 enum class PrimitiveType {
-	SPHERE = 0, TRIANGLE = 1
+	SPHERE = 0, TRIANGLE = 1, QUAD = 2
 };
 
 class Primitive {
@@ -16,6 +16,8 @@ public:
 	int matIndex;
 public:
 	virtual ~Primitive() = default;
+	virtual void OnRender() = 0;
+
 	virtual HitRecord Intersect(const Ray& ray) 
 		const = 0;
 	virtual AABB BoundingBox() const = 0;

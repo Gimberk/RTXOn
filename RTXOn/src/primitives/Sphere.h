@@ -50,10 +50,31 @@ public:
 		// get the normal easier.
 		record.worldPosition += position;
 
+		float* uv = GetSphereUV(record.worldPosition);
+		record.u = uv[0]; record.v = uv[1];
+
 		return record;
 	}
 
+	void OnRender() override {
+		Initialize();
+	}
+
 	AABB BoundingBox() const override { return boundingBox; }
+
+	static float* GetSphereUV(const glm::vec3 hitPoint) {
+		float pi = 3.14159265359;
+
+		float theta = acos(-hitPoint.y);
+		float phi = atan2(-hitPoint.z, hitPoint.x) + pi;
+		
+		float uv[2] = {
+			phi / (2*pi),
+			theta / pi
+		};
+
+		return uv;
+	}
 private:
 	void Initialize() {
 		type = PrimitiveType::SPHERE;

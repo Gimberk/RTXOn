@@ -48,6 +48,10 @@ public:
         return record;
     }
 
+    void OnRender() override {
+
+    }
+
     AABB BoundingBox() const override { return boundingBox; }
 private:
 	glm::vec3 normalA, normalB, normalC;

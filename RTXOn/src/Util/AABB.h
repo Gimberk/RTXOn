@@ -14,6 +14,11 @@ struct Interval {
 
 	Interval(float min, float max) : min(min), max(max) {}
 
+	Interval(const Interval a, const Interval b) {
+		min = fmin(a.min, b.min);
+		max = fmax(a.max, b.max);
+	}
+
 	float size() { return min + max; }
 
 	void expand(float pad) {
@@ -39,6 +44,12 @@ public:
 		z = (a.z <= b.z) ? Interval(a.z, b.z) : Interval(b.z, a.z);
 
 		pad();
+	}
+
+	AABB(const AABB a, const AABB b) {
+		x = Interval(a.x, b.x);
+		y = Interval(a.y, b.y);
+		z = Interval(a.z, b.z);
 	}
 
 	AABB(const Interval x, const Interval y, const Interval z) : x(x), y(y), z(z) {
@@ -114,6 +125,7 @@ public:
 		else if (hitPoint.y >= y.max - 1e-4) record.worldNormal = glm::vec3(0, 1, 0);
 		else if (hitPoint.z <= z.min + 1e-4) record.worldNormal = glm::vec3(0, 0, -1);
 		else if (hitPoint.z >= z.max - 1e-4) record.worldNormal = glm::vec3(0, 0, 1);
+		return record;
 	}
 private:
 	void pad() {
