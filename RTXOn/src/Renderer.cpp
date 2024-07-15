@@ -136,7 +136,7 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 			break;
 		}
 
-		const Material& material = 
+		const Material& material = record.objIndex == -1 ? activeScene->materials[0] :
 			activeScene->materials[activeScene->objects[record.objIndex]->matIndex];
 
 		ray.origin = record.worldPosition + record.worldNormal * 0.0001f;
@@ -189,6 +189,11 @@ HitRecord Renderer::TraceRay(const Ray& ray) {
 	HitRecord record;
 
 	for (size_t i = 0; i < activeScene->objects.size(); i++) {
+		if (activeScene->objects[i]->GetType() == PrimitiveType::SPHERE){
+			HitRecord bBoxRecord = 
+				activeScene->objects[i]->BoundingBox().Intersect(ray, false);
+			if (bBoxRecord.hitDist == -1) continue;
+		}
 		HitRecord tempRecord = activeScene->objects[i]->Intersect(ray);
 		tempRecord.objIndex = (int)i;
 		if (tempRecord.hitDist > 0.0f && tempRecord.hitDist < closestDist) {

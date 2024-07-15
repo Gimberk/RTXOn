@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Primitive.h"
-#include "../HitRecord.h"
 
 class Triangle : public Primitive {
 public:
@@ -13,6 +12,8 @@ public:
 		normalA = glm::normalize(a);
 		normalB = glm::normalize(b);
 		normalC = glm::normalize(c);
+
+        boundingBox = AABB();
 	}
 
 	// stupid math stuff like cmon man! (Moller-Trumbore algorithm):
@@ -46,6 +47,9 @@ public:
         record.worldNormal = glm::normalize(normal);
         return record;
     }
+
+    AABB BoundingBox() const override { return boundingBox; }
 private:
 	glm::vec3 normalA, normalB, normalC;
+    AABB boundingBox;
 };

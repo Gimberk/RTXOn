@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Primitive.h"
-#include "../HitRecord.h"
 
 class Sphere : public Primitive {
 public:
@@ -9,7 +8,11 @@ public:
 	float radius = 0.5f;
 public:
 	Sphere() {
-		type = PrimitiveType::SPHERE;
+		Initialize();
+	}
+
+	Sphere(glm::vec3 position, float radius) : radius(radius), position(position) {
+		Initialize();
 	}
 
 	HitRecord Intersect(const Ray& ray) const override {
@@ -49,4 +52,15 @@ public:
 
 		return record;
 	}
+
+	AABB BoundingBox() const override { return boundingBox; }
+private:
+	void Initialize() {
+		type = PrimitiveType::SPHERE;
+
+		glm::vec3 radiusVector(radius);
+		boundingBox = AABB(position - radiusVector, position + radiusVector);
+	}
+private:
+	AABB boundingBox;
 };

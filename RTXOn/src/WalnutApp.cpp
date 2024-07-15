@@ -20,41 +20,13 @@ public:
 		camera.SetMoveSpeed(4.6f);
 
 		Material& sphere = scene.materials.emplace_back();
-		sphere.albedo = glm::vec3(0.0f);
+		sphere.albedo = glm::vec3(0.0f, 1.0f, 0.0f);
 		sphere.metallicness = 0.0f;
 
-		Material& triangle = scene.materials.emplace_back();
-		triangle.albedo = glm::vec3(1.0f);
-		triangle.metallicness = 0.0f;
-
-		Material& floor = scene.materials.emplace_back();
-		floor.albedo = glm::vec3(1.0f, 0.0f, 1.0f);
-		floor.metallicness = 0.0f;
-
 		{
-			Sphere sphere;
-			sphere.position = glm::vec3(2.0f, 0.0f, 0.0f);
-			sphere.radius = 0.5f;
-			sphere.matIndex = 2;
+			Sphere sphere(glm::vec3(0.0f, 2.0f, -3.0f), 0.1f);
+			sphere.matIndex = 0;
 			scene.objects.push_back(std::make_shared<Sphere>(sphere));
-		}
-
-		{
-			Sphere sphere;
-			sphere.position = glm::vec3(-2000.0f, -100.5f, 0.0f);
-			sphere.radius = 100.0f;
-			sphere.matIndex = 2;
-			scene.objects.push_back(std::make_shared<Sphere>(sphere));
-		}
-
-		{
-			Triangle triangle(
-				glm::vec3(2.0f, 0.0f, 0.0f),
-				glm::vec3(0.0f, 0.0f, -5.0f),
-				glm::vec3(-2.0f, 0.0f, 0.0f)
-			);
-			triangle.matIndex = 1;
-			scene.objects.push_back(std::make_shared<Triangle>(triangle));
 		}
 	}
 

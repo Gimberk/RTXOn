@@ -2,10 +2,10 @@
 
 #include "Walnut/Image.h"
 
-#include "Camera.h"
-#include "Ray.h"
+#include "Util/Camera.h"
+#include "Util/Ray.h"
 #include "Scene.h"
-#include "HitRecord.h"
+#include "Util/HitRecord.h"
 
 #include <memory>
 
