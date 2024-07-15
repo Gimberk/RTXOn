@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+#include "primitives/Primitive.h"
+
 struct Material {
 	glm::vec3 albedo{ 1.0f };
 	glm::vec3 emissionColor{ 0.0f };
@@ -17,15 +19,7 @@ struct Material {
 	glm::vec3 GetEmission() const { return emissionColor * emissionPower; }
 };
 
-struct Sphere {
-public:
-	glm::vec3 position{ 0.0f };
-	float radius = 0.5f;
-
-	int matIndex = 0;
-};
-
 struct Scene {
-	std::vector<Sphere> spheres;
+	std::vector<std::shared_ptr<Primitive>> objects;
 	std::vector<Material> materials;
 };

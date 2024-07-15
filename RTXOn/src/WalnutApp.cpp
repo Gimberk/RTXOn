@@ -2,10 +2,11 @@
 #include "Walnut/EntryPoint.h"
 
 #include "Walnut/Image.h"
-
 #include "Walnut/Timer.h"
 
-#include "../src/Renderer.h"
+#include "Renderer.h"
+#include "primitives/Sphere.h"
+#include "primitives/Triangle.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -18,40 +19,42 @@ public:
 		camera.SetMouseSens(0.009f);
 		camera.SetMoveSpeed(4.6f);
 
-		Material& pink = scene.materials.emplace_back();
-		pink.albedo = glm::vec3(1.0f, 0.0f, 1.0f);
-		pink.metallicness = 0.0f;
+		Material& sphere = scene.materials.emplace_back();
+		sphere.albedo = glm::vec3(0.0f);
+		sphere.metallicness = 0.0f;
 
-		Material& blue = scene.materials.emplace_back();
-		blue.albedo = glm::vec3(0.2f, 0.3f, 1.0f);
-		blue.metallicness = 0.0f;
+		Material& triangle = scene.materials.emplace_back();
+		triangle.albedo = glm::vec3(1.0f);
+		triangle.metallicness = 0.0f;
 
-		Material& orange = scene.materials.emplace_back();
-		orange.albedo = glm::vec3(0.8f, 0.5f, 0.2f);
-		orange.metallicness = 0.0f;
-
-		{
-			Sphere sphere;
-			sphere.position = glm::vec3(0.0f);
-			sphere.radius = 1.0f;
-			sphere.matIndex = 0; // pink
-			scene.spheres.push_back(sphere);
-		}
-
-		{
-			Sphere sphere;
-			sphere.position = glm::vec3(0.0f, -101.0f, 0.0f);
-			sphere.radius = 100.0f;
-			sphere.matIndex = 1; // bleu
-			scene.spheres.push_back(sphere);
-		}
+		Material& floor = scene.materials.emplace_back();
+		floor.albedo = glm::vec3(1.0f, 0.0f, 1.0f);
+		floor.metallicness = 0.0f;
 
 		{
 			Sphere sphere;
 			sphere.position = glm::vec3(2.0f, 0.0f, 0.0f);
-			sphere.radius = 1.0f;
-			sphere.matIndex = 2; // bright stuff
-			scene.spheres.push_back(sphere);
+			sphere.radius = 0.5f;
+			sphere.matIndex = 2;
+			scene.objects.push_back(std::make_shared<Sphere>(sphere));
+		}
+
+		{
+			Sphere sphere;
+			sphere.position = glm::vec3(-2000.0f, -100.5f, 0.0f);
+			sphere.radius = 100.0f;
+			sphere.matIndex = 2;
+			scene.objects.push_back(std::make_shared<Sphere>(sphere));
+		}
+
+		{
+			Triangle triangle(
+				glm::vec3(2.0f, 0.0f, 0.0f),
+				glm::vec3(0.0f, 0.0f, -5.0f),
+				glm::vec3(-2.0f, 0.0f, 0.0f)
+			);
+			triangle.matIndex = 1;
+			scene.objects.push_back(std::make_shared<Triangle>(triangle));
 		}
 	}
 
@@ -67,26 +70,34 @@ public:
 		if (ImGui::Button("Pause")) renderFrame = 0;
 
 		ImGui::Checkbox("Accumulate", &renderer.GetSettings().accumulate);
+		ImGui::Checkbox("Correct Gamma", &renderer.GetSettings().correctGamma);
+		if (renderer.GetSettings().correctGamma) {
+			ImGui::DragFloat("Gamma Correction", &renderer.GetSettings().gammaCorrection,
+				0.2f, 0.25f, 2);
+		}
 
 		if (ImGui::Button("Reset")) renderer.ResetFrameIndex();
 		ImGui::End();
 
 		ImGui::Begin("Scene");
-		for (size_t i = 0; i < scene.spheres.size(); i++) {
+		for (int i = 0; i < scene.objects.size(); i++) {
 			ImGui::PushID(i);
-
-			Sphere& sphere = scene.spheres[i];
-			ImGui::DragFloat3("Position", glm::value_ptr(sphere.position), 0.1f);
-			ImGui::DragFloat("Radius", &sphere.radius, 0.1f);
-			ImGui::DragInt("Material", &sphere.matIndex, 1.0f, 0, 
-							scene.materials.size() - 1);
+			switch (scene.objects[i]->GetType()) {
+			case PrimitiveType::SPHERE:
+				std::shared_ptr<Sphere> sphere = 
+					std::dynamic_pointer_cast<Sphere>(scene.objects[i]);
+				ImGui::DragFloat3("Position", glm::value_ptr(sphere->position), 0.1f);
+				ImGui::DragFloat("Radius", &sphere->radius, 0.1f);
+				ImGui::DragInt("Material", &sphere->matIndex, 1.0f, 0,
+					scene.materials.size() - 1);
+			}
 
 			ImGui::Separator();
 
 			ImGui::PopID();
 		}
 
-		for (size_t i = 0; i < scene.materials.size(); i++) {
+		for (int i = 0; i < scene.materials.size(); i++) {
 			ImGui::PushID(i);
 
 			Material& material = scene.materials[i];
