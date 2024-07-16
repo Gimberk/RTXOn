@@ -11,6 +11,7 @@ public:
 
 		normal = glm::normalize(cross(u, v));
 		D = glm::dot(normal, Q);
+        dotU = glm::dot(u, u); dotV = glm::dot(v, v);
 
 		SetBoundingBox();
 	}
@@ -21,7 +22,6 @@ public:
 		boundingBox = AABB(diagonalA, diagonalB);
 	}
 
-	// meh
     HitRecord Intersect(const Ray& ray) const override {
         float denominator = glm::dot(normal, ray.direction);
 
@@ -32,7 +32,7 @@ public:
         if (fabs(denominator) < 1e-8) return record;
 
         // Calculate the parameter t of the intersection point.
-        auto t = (glm::dot(normal, Q) - glm::dot(normal, ray.origin)) / denominator;
+        auto t = (D - glm::dot(normal, ray.origin)) / denominator;
         if (t < 0) return record; // Ensure t is within the valid range.
 
         // Calculate the intersection point.
@@ -44,17 +44,21 @@ public:
         float dv = glm::dot(d, v);
 
         // Check if the intersection point is within the quad.
-        if (du < 0 || du > glm::dot(u, u) || dv < 0 || dv > glm::dot(v, v)) {
+        if (du < 0 || du > dotU || dv < 0 || dv > dotV) {
             return record; // Intersection point is outside the quad.
         }
+
+        // Flip the normal if the ray intersects from the backside.
+        glm::vec3 correctedNormal = (denominator < 0) ? normal : -normal;
 
         // Set the hit record with intersection details.
         record.hitDist = t;
         record.worldPosition = intersection;
-        record.worldNormal = normal;
+        record.worldNormal = correctedNormal;
 
         return record;
     }
+
 
     void OnRender() override {
 
@@ -67,4 +71,6 @@ private:
 
 	AABB boundingBox;
 	glm::vec3 normal;
+private:
+    float dotU, dotV;
 };

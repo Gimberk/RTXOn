@@ -1,0 +1,9 @@
+Bounding boxes for triangles and spheres (DONE)
+
+Quads/Rectangles (duh)                   (DONE)
+
+Texturing				 (POSTPONED)
+
+Cornell-Box				 (DONE)
+
+multi-triangle objects			 

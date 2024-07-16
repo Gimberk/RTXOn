@@ -29,6 +29,8 @@ public:
 	float GetMoveSpeed() const { return speed; }
 	// NOTE: Base speed is 5.0
 	void SetMoveSpeed(const float newSpeed) { speed = newSpeed; }
+
+	float speed = 5.0f;
 private:
 	void RecalculateProjection();
 	void RecalculateView();
@@ -44,7 +46,6 @@ private:
 	float m_FarClip = 100.0f;
 
 	float mouseSens = 0.002f;
-	float speed = 5.0f;
 
 	glm::vec3 m_Position{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 m_ForwardDirection{ 0.0f, 0.0f, 0.0f };

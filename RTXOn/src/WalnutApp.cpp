@@ -44,20 +44,31 @@ public:
 
 		camera.SetMouseSens(0.01);
 		camera.SetMoveSpeed(40.0f);
-		Material& sphere = scene.materials.emplace_back();
-		sphere.albedo = glm::vec3(0.12f, 0.45f, 0.15f);
-		sphere.metallicness = 0.0f;
+		Material& b = scene.materials.emplace_back();
+		b.albedo = glm::vec3(0.12f, 0.45f, 0.15f);
+		b.metallicness = 0.0f;
 		Material& d = scene.materials.emplace_back();
 		d.albedo = glm::vec3(0.65f, 0.05f, 0.05f);
 		d.metallicness = 0.0f;
 		Material& f = scene.materials.emplace_back();
 		f.albedo = glm::vec3(1.0f);
-		f.emissionPower = 15.0f;
+		f.emissionPower = 1000.0f;
 		f.light = true;
 		f.emissionColor = glm::vec3(1.0f);
 		Material& c = scene.materials.emplace_back();
 		c.albedo = glm::vec3(0.73f);
 		c.metallicness = 0.0f;
+
+		Material& sphere = scene.materials.emplace_back();
+		sphere.albedo = glm::vec3(0.73f);
+		sphere.metallicness = 0.0f;
+
+		{
+			Sphere sphere(glm::vec3(270), 40);
+			sphere.matIndex = 4;
+			scene.objects.push_back(std::make_shared<Sphere>(sphere));
+		}
+
 		{
 			Quad quad(glm::vec3(555,0,0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
 			quad.matIndex = 0;
@@ -98,8 +109,12 @@ public:
 	{
 		ImGui::Begin("Settings");
 		ImGui::Text("Render took: %0.2fms", renderTime);
+		ImGui::DragFloat("Move Speed", &camera.speed);
 		if (ImGui::Button("Render")) renderFrame = 1;
 		if (ImGui::Button("Pause")) renderFrame = 0;
+
+		ImGui::DragInt("Bounce Limit", 
+			&renderer.GetSettings().bounceLimit, 1, 1, 1000);
 
 		ImGui::Checkbox("Accumulate", &renderer.GetSettings().accumulate);
 		ImGui::Checkbox("Correct Gamma", &renderer.GetSettings().correctGamma);
