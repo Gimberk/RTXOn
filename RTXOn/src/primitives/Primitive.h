@@ -7,7 +7,7 @@
 #include <iostream>
 
 enum class PrimitiveType {
-	SPHERE = 0, TRIANGLE = 1, QUAD = 2
+	SPHERE = 0, TRIANGLE = 1, QUAD = 2, MESH = 3
 };
 
 class Primitive {

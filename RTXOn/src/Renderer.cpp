@@ -117,9 +117,27 @@ void Renderer::Render(const Scene& scene, const Camera& camera) {
 	}
 }
 
+//glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
+//	Ray ray(activeCamera->GetPosition(), activeCamera->GetRayDirections()
+//		[x + y * finalImage->GetWidth()]);
+//
+//	glm::vec3 color(0.0f);
+//
+//	HitRecord record = TraceRay(ray);
+//	float hit = record.hitDist;
+//
+//	if (hit != -1) {
+//		// Normalize the normal to be between 0 and 1 for coloring
+//		glm::vec3 normalColor = (record.worldNormal + glm::vec3(1.0f)) * 0.5f;
+//		color = normalColor;
+//	}
+//
+//	return glm::vec4(color, 1.0f);
+//}
 
 glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
-	Ray ray(activeCamera->GetPosition(), activeCamera->GetRayDirections()[x + y * finalImage->GetWidth()]);
+	Ray ray(activeCamera->GetPosition(), activeCamera->GetRayDirections()
+		[x + y * finalImage->GetWidth()]);
 
 	glm::vec3 light(0.0f);
 	glm::vec3 throughput(1.0f);
@@ -133,29 +151,39 @@ glm::vec4 Renderer::PerPixel(const uint32_t x, const uint32_t y) {
 		HitRecord record = TraceRay(ray);
 		float hit = record.hitDist;
 
-		if (hit == -1.0f) {
-			light += glm::vec3(0.6f, 0.7f, 0.9f) * throughput;
-			break;
-		}
+		// Branchless programming for miss check
+		bool miss = (hit == -1.0f);
+		float missFactor = miss ? 1.0f : 0.0f;
+		light += glm::vec3(0.6f, 0.7f, 0.9f) * throughput * missFactor;
+		if (miss) break;
 
-		const Material& material = record.objIndex == -1 ? activeScene->materials[0] : activeScene->materials[activeScene->objects[record.objIndex]->matIndex];
+		const Material& material = record.objIndex == -1 ? activeScene->materials[0] :
+			activeScene->materials[activeScene->objects[record.objIndex]->matIndex];
 
-		ray.origin = record.worldPosition + record.worldNormal * 0.0001f;
+		// Interpolate and normalize normal
+		glm::vec3 interpolatedNormal = glm::normalize(record.worldNormal);
 
-		glm::vec3 specular = glm::reflect(ray.direction, record.worldNormal);
-		glm::vec3 diffuse = glm::normalize(record.worldNormal + Utils::RandInUnitSphere(seed));
+		ray.origin = record.worldPosition + interpolatedNormal * 0.0001f;
+
+		// Calculate reflection vector
+		glm::vec3 specular = glm::reflect(ray.direction, interpolatedNormal);
+
+		// Calculate diffuse lighting
+		glm::vec3 diffuse = glm::normalize(interpolatedNormal + Utils::RandInUnitSphere(seed));
 
 		bool specularReflection = material.specularProbability >= Utils::RandFloat(seed);
+
+		// Mix diffuse and specular reflections
 		ray.direction = glm::mix(diffuse, specular, material.metallicness * specularReflection);
 
+		// Update throughput with material albedo
 		throughput *= material.albedo;
+
+		// Add emission if the material is a light source
 		if (material.light) light += material.GetEmission() * throughput;
 	}
-
 	return glm::vec4(light, 1.0f);
 }
-
-
 
 HitRecord Renderer::TraceRay(const Ray& ray) {
 	int closest = -1;
@@ -164,8 +192,16 @@ HitRecord Renderer::TraceRay(const Ray& ray) {
 
 	for (size_t i = 0; i < activeScene->objects.size(); i++) {
 		const auto& object = activeScene->objects[i];
-		HitRecord bBoxRecord = object->BoundingBox().Intersect(ray, false);
-		if (bBoxRecord.hitDist == -1) continue;
+		if (settings.renderBoundingBoxes) {
+			HitRecord bBoxRecord = object->BoundingBox().Intersect(ray, true);
+			if (bBoxRecord.hitDist == -1) continue;
+			bBoxRecord.objIndex = -1;
+			return bBoxRecord;
+		}
+		else {
+			HitRecord bBoxRecord = object->BoundingBox().Intersect(ray, false);
+			if (bBoxRecord.hitDist == -1) continue;
+		}
 
 		HitRecord tempRecord = object->Intersect(ray);
 		if (tempRecord.hitDist > 0.0f && tempRecord.hitDist < closestDist) {

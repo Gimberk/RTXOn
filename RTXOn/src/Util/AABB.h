@@ -3,8 +3,8 @@
 #include <glm/glm.hpp>
 #include<limits>
 
-#include "Util/HitRecord.h"
-#include "Util/Ray.h"
+#include "HitRecord.h"
+#include "Ray.h"
 
 struct Interval {
 	float min, max;
@@ -110,7 +110,7 @@ public:
 
 private:
 	void pad() {
-		float min = 0.0001;
+		float min = 0.0001f;
 		if (x.size() < min) x.expand(min);
 		if (y.size() < min) y.expand(min);
 		if (z.size() < min) z.expand(min);

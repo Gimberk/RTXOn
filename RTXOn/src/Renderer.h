@@ -15,9 +15,9 @@ public:
 	struct Settings {
 		bool accumulate = true;
 		bool correctGamma = false;
+		bool renderBoundingBoxes = false;
 
 		int bounceLimit = 10;
-
 		float gammaCorrection = 0.5f;
 	};
 public:

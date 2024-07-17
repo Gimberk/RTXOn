@@ -4,6 +4,8 @@
 #include "Walnut/Image.h"
 #include "Walnut/Timer.h"
 
+#include "Util/ModelLoader.h"
+
 #include "Renderer.h"
 #include "primitives/Quad.h"
 #include "primitives/Sphere.h"
@@ -12,6 +14,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace Walnut;
+
+VkDevice device;
+VkPhysicalDevice physicalDevice;
 
 class ExampleLayer : public Walnut::Layer
 {
@@ -42,6 +47,13 @@ public:
 		//	scene.objects.push_back(std::make_shared<Sphere>(sphere));
 		//}
 
+		Mesh mesh = ModelLoader::LoadModel("low-poly-pawn\\pawn.obj");
+		if (mesh.GetType() != PrimitiveType::TRIANGLE) { // ensure we successfully built the mesh
+			mesh.matIndex = 1;
+			mesh.SetObjectIndex(0);
+			scene.objects.push_back(std::make_shared<Mesh>(mesh));
+		}
+
 		camera.SetMouseSens(0.01);
 		camera.SetMoveSpeed(40.0f);
 		Material& b = scene.materials.emplace_back();
@@ -63,42 +75,52 @@ public:
 		sphere.albedo = glm::vec3(0.73f);
 		sphere.metallicness = 0.0f;
 
+		//{
+		//	Triangle tri(
+		//		glm::vec3(-2.0f, 0.0f, 0.0f),
+		//		glm::vec3(0.0f, 5.0f, 0.0f),
+		//		glm::vec3(2.0f, 0.0f, 0.0f)
+		//	);
+		//	tri.matIndex = 1;
+		//	scene.objects.push_back(std::make_shared<Triangle>(tri));
+		//}
+
 		{
-			Sphere sphere(glm::vec3(270), 40);
+			Sphere sphere(glm::vec3(0.0f, 5.0f, 0.0f), 1);
 			sphere.matIndex = 4;
 			scene.objects.push_back(std::make_shared<Sphere>(sphere));
 		}
 
-		{
-			Quad quad(glm::vec3(555,0,0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
-			quad.matIndex = 0;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
-		{
-			Quad quad(glm::vec3(0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
-			quad.matIndex = 1;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
-		{
-		Quad quad(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105));
-			quad.matIndex = 2;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
-		{
-			Quad quad(glm::vec3(0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555));
-			quad.matIndex = 3;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
-		{
-			Quad quad(glm::vec3(555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555));
-			quad.matIndex = 3;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
-		{
-			Quad quad(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0));
-			quad.matIndex = 3;
-			scene.objects.push_back(std::make_shared<Quad>(quad));
-		}
+		//{
+		//	Quad quad(glm::vec3(555,0,0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
+		//	quad.matIndex = 0;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
+		//{
+		//	Quad quad(glm::vec3(0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
+		//	quad.matIndex = 1;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
+		//{
+		//Quad quad(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105));
+		//	quad.matIndex = 2;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
+		//{
+		//	Quad quad(glm::vec3(0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555));
+		//	quad.matIndex = 3;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
+		//{
+		//	Quad quad(glm::vec3(555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555));
+		//	quad.matIndex = 3;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
+		//{
+		//	Quad quad(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0));
+		//	quad.matIndex = 3;
+		//	scene.objects.push_back(std::make_shared<Quad>(quad));
+		//}
 	}
 
 	virtual void OnUpdate(float ts) override {
@@ -118,6 +140,7 @@ public:
 
 		ImGui::Checkbox("Accumulate", &renderer.GetSettings().accumulate);
 		ImGui::Checkbox("Correct Gamma", &renderer.GetSettings().correctGamma);
+		ImGui::Checkbox("Render Bounding Boxes", &renderer.GetSettings().renderBoundingBoxes);
 		if (renderer.GetSettings().correctGamma) {
 			ImGui::DragFloat("Gamma Correction", &renderer.GetSettings().gammaCorrection,
 				0.2f, 0.25f, 2);
@@ -212,6 +235,8 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "RTXOn!";
 
 	Walnut::Application* app = new Walnut::Application(spec);
+	device = app->GetDevice();
+	physicalDevice = app->GetPhysicalDevice();
 	app->PushLayer<ExampleLayer>();
 	app->SetMenubarCallback([app]()
 	{

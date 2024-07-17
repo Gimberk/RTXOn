@@ -13,39 +13,79 @@ public:
 		normalB = glm::normalize(b);
 		normalC = glm::normalize(c);
 
-        boundingBox = AABB();
+        Initialize();
 	}
+
+    void SetNormals(const glm::vec3* normals) {
+        normalA = normals[0]; normalB = normals[1]; normalC = normals[2];
+    }
+
+    glm::vec3* GetNormals() const {
+        glm::vec3 normals[3] = {
+            normalA, normalB, normalC
+        };
+        return normals;
+    }
+
+    void Initialize() {
+        glm::vec3 min = posA;
+        glm::vec3 max = posA;
+
+        min = glm::min(min, posB);
+        max = glm::max(max, posB);
+
+        min = glm::min(min, posC);
+        max = glm::max(max, posC);
+
+        boundingBox = AABB(min, max);
+    }
 
 	// stupid math stuff like cmon man! (Moller-Trumbore algorithm):
 	//         <3
 	// I'm so stupid, so please, don't be like me. When I create the triangle,
 	// I lined all the points on the x-axis, and was confused as to why 
 	// I didn't see a triangle for 20+ minutes... I'm going insane.
-    HitRecord Intersect(const Ray& ray) const override {
-        glm::vec3 abEdge = posB - posA;
-        glm::vec3 acEdge = posC - posA;
-        glm::vec3 normal = glm::cross(abEdge, acEdge);
-        glm::vec3 oa = ray.origin - posA;
-        glm::vec3 doa = glm::cross(oa, ray.direction);
+    HitRecord Intersect(const Ray& ray) const {
+        HitRecord record{};
 
-        float determinant = -glm::dot(ray.direction, normal);
-        float inverseDeterminant = 1 / determinant;
+        glm::vec3 edge1 = posB - posA;
+        glm::vec3 edge2 = posC - posA;
+        glm::vec3 h = glm::cross(ray.direction, edge2);
+        float a = glm::dot(edge1, h);
 
-        float distance = glm::dot(oa, normal) * inverseDeterminant;
-        float u = glm::dot(acEdge, doa) * inverseDeterminant;
-        float v = -glm::dot(abEdge, doa) * inverseDeterminant;
-        float w = 1 - u - v;
+        if (fabs(a) < 1e-8)
+            return record; // This means that there is no intersection
 
-        HitRecord record;
-        if (!(determinant >= 1E-6 && distance >= 0 && u >= 0 && v >= 0 && w >= 0)) {
-            record.hitDist = -1;
+        float f = 1.0f / a;
+        glm::vec3 s = ray.origin - posA;
+        float u = f * glm::dot(s, h);
+
+        if (u < 0.0 || u > 1.0)
+            return record;
+
+        glm::vec3 q = glm::cross(s, edge1);
+        float v = f * glm::dot(ray.direction, q);
+
+        if (v < 0.0 || u + v > 1.0)
+            return record;
+
+        float t = f * glm::dot(edge2, q);
+
+        if (t > 1e-8) {
+            record.hitDist = t;
+            record.worldPosition = ray.origin + t * ray.direction;
+
+            // Compute barycentric coordinates
+            float w = 1.0f - u - v;
+
+            // Interpolate normal using barycentric coordinates
+            record.worldNormal = glm::normalize(w * normalA + u * normalB + v * normalC);
+
             return record;
         }
-
-        record.hitDist = distance;
-        record.worldPosition = ray.origin + ray.direction * record.hitDist;
-        record.worldNormal = glm::normalize(normal);
-        return record;
+        else {
+            return record; // This means that there is a line intersection but not a ray intersection
+        }
     }
 
     void OnRender() override {
