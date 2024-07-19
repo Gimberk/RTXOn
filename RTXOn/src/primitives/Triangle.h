@@ -13,7 +13,7 @@ public:
 		normalB = glm::normalize(b);
 		normalC = glm::normalize(c);
 
-        Initialize();
+        UpdateBoundingBoxes();
 	}
 
     void SetNormals(const glm::vec3* normals) {
@@ -27,7 +27,7 @@ public:
         return normals;
     }
 
-    void Initialize() {
+    void UpdateBoundingBoxes() {
         glm::vec3 min = posA;
         glm::vec3 max = posA;
 

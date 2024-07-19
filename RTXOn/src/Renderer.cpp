@@ -79,7 +79,6 @@ void Renderer::OnResize(const uint32_t width, const uint32_t height) {
 	for (uint32_t i = 0; i < height; i++) imageColumnIterator[i] = i;
 }
 
-
 void Renderer::Render(const Scene& scene, const Camera& camera) {
 	activeScene = &scene;
 	activeCamera = &camera;
@@ -215,7 +214,6 @@ HitRecord Renderer::TraceRay(const Ray& ray) {
 	if (closest < 0) return RayMiss(ray);
 	return record;
 }
-
 
 HitRecord Renderer::RayMiss(const Ray& ray) {
 	HitRecord record;

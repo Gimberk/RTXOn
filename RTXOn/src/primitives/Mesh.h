@@ -33,6 +33,23 @@ public:
 		type = PrimitiveType::TRIANGLE;
 	}
 
+	void SetPosition(const glm::vec3 pos, bool add) {
+		offset = pos;
+		for (Triangle& tri : tris) {
+			if (!add) offset *= -1;
+			tri.posA += offset;
+			tri.posB += offset;
+			tri.posC += offset;
+			tri.UpdateBoundingBoxes();
+		}
+
+		boundingBox = this->tris[0].BoundingBox();
+		for (int i = 1; i < this->tris.size(); i++) {
+			Triangle& tri = this->tris[i];
+			boundingBox = AABB(boundingBox, tri.BoundingBox());
+		}
+	}
+
 	HitRecord Intersect(const Ray& ray) const override {
 		HitRecord record;
 
@@ -61,6 +78,8 @@ public:
 	}
 
 	AABB BoundingBox() const override { return boundingBox; }
+
+	glm::vec3 offset = glm::vec3(0.0f);
 private:
 	AABB boundingBox;
 

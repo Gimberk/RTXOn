@@ -6,6 +6,7 @@
 #include "Util/Ray.h"
 #include "Scene.h"
 #include "Util/HitRecord.h"
+#include "Util/ModelLoader.h"
 
 #include <memory>
 

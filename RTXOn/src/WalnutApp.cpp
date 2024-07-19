@@ -47,11 +47,19 @@ public:
 		//	scene.objects.push_back(std::make_shared<Sphere>(sphere));
 		//}
 
-		Mesh mesh = ModelLoader::LoadModel("low-poly-pawn\\pawn.obj");
-		if (mesh.GetType() != PrimitiveType::TRIANGLE) { // ensure we successfully built the mesh
-			mesh.matIndex = 1;
-			mesh.SetObjectIndex(0);
-			scene.objects.push_back(std::make_shared<Mesh>(mesh));
+		Mesh pawn = ModelLoader::LoadModel("low-poly-pawn\\pawn.obj");
+		if (pawn.GetType() != PrimitiveType::TRIANGLE) { // ensure we successfully built the mesh
+			pawn.matIndex = 4;
+			pawn.SetObjectIndex(0);
+			scene.objects.push_back(std::make_shared<Mesh>(pawn));
+		}
+
+		Mesh king = ModelLoader::LoadModel("low-poly-king\\king.obj");
+		king.SetPosition(glm::vec3(3, 0, 0), true);
+		if (king.GetType() != PrimitiveType::TRIANGLE) { // ensure we successfully built the mesh
+			king.matIndex = 5;
+			king.SetObjectIndex(0);
+			scene.objects.push_back(std::make_shared<Mesh>(king));
 		}
 
 		camera.SetMouseSens(0.01);
@@ -75,6 +83,10 @@ public:
 		sphere.albedo = glm::vec3(0.73f);
 		sphere.metallicness = 0.0f;
 
+		Material& a = scene.materials.emplace_back();
+		a.albedo = glm::vec3(0, 0, 0.73f);
+		a.metallicness = 0.0f;
+
 		//{
 		//	Triangle tri(
 		//		glm::vec3(-2.0f, 0.0f, 0.0f),
@@ -85,42 +97,38 @@ public:
 		//	scene.objects.push_back(std::make_shared<Triangle>(tri));
 		//}
 
+		double factor = 22.0f;
 		{
-			Sphere sphere(glm::vec3(0.0f, 5.0f, 0.0f), 1);
-			sphere.matIndex = 4;
-			scene.objects.push_back(std::make_shared<Sphere>(sphere));
+			Quad quad(glm::vec3(555 / factor, 0, 0), glm::vec3(0, 555 / factor, 0), glm::vec3(0, 0, 555 / factor));
+			quad.matIndex = 0;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0), glm::vec3(0, 555 / factor, 0), glm::vec3(0, 0, 555 / factor));
+			quad.matIndex = 1;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(343 / factor, 554 / factor, 332 / factor), glm::vec3(-130 / factor, 0, 0), glm::vec3(0, 0, -105 / factor));
+			quad.matIndex = 2;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0), glm::vec3(555 / factor, 0, 0), glm::vec3(0, 0, 555 / factor));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(555 / factor), glm::vec3(-555 / factor, 0, 0), glm::vec3(0, 0, -555 / factor));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
+		}
+		{
+			Quad quad(glm::vec3(0, 0, 555 / factor), glm::vec3(555 / factor, 0, 0), glm::vec3(0, 555 / factor, 0));
+			quad.matIndex = 3;
+			scene.objects.push_back(std::make_shared<Quad>(quad));
 		}
 
-		//{
-		//	Quad quad(glm::vec3(555,0,0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
-		//	quad.matIndex = 0;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
-		//{
-		//	Quad quad(glm::vec3(0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555));
-		//	quad.matIndex = 1;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
-		//{
-		//Quad quad(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105));
-		//	quad.matIndex = 2;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
-		//{
-		//	Quad quad(glm::vec3(0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555));
-		//	quad.matIndex = 3;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
-		//{
-		//	Quad quad(glm::vec3(555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555));
-		//	quad.matIndex = 3;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
-		//{
-		//	Quad quad(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0));
-		//	quad.matIndex = 3;
-		//	scene.objects.push_back(std::make_shared<Quad>(quad));
-		//}
 	}
 
 	virtual void OnUpdate(float ts) override {
@@ -152,14 +160,23 @@ public:
 		ImGui::Begin("Scene");
 		for (int i = 0; i < scene.objects.size(); i++) {
 			ImGui::PushID(i);
-			switch (scene.objects[i]->GetType()) {
-			case PrimitiveType::SPHERE:
+			if (scene.objects[i]->GetType() == PrimitiveType::SPHERE) {
 				std::shared_ptr<Sphere> sphere =
 					std::dynamic_pointer_cast<Sphere>(scene.objects[i]);
 				ImGui::DragFloat3("Position", glm::value_ptr(sphere->position), 0.1f);
 				ImGui::DragFloat("Radius", &sphere->radius, 0.1f);
 				ImGui::DragInt("Material", &sphere->matIndex, 1.0f, 0,
 					scene.materials.size() - 1);
+			}
+			else if (scene.objects[i]->GetType() == PrimitiveType::MESH){
+				std::shared_ptr<Mesh> mesh =
+					std::dynamic_pointer_cast<Mesh>(scene.objects[i]);
+				ImGui::DragFloat3("Position", glm::value_ptr(mesh->offset), 0.1f);
+				ImGui::DragInt("Material", &mesh->matIndex, 1.0f, 0,
+					scene.materials.size() - 1);
+
+				if (ImGui::Button("~Reset Position~")) mesh->SetPosition(mesh->offset, true);
+				if (ImGui::Button("~Reset Position -~")) mesh->SetPosition(mesh->offset, false);
 			}
 
 			ImGui::Separator();
@@ -235,8 +252,10 @@ Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
 	spec.Name = "RTXOn!";
 
 	Walnut::Application* app = new Walnut::Application(spec);
+
 	device = app->GetDevice();
 	physicalDevice = app->GetPhysicalDevice();
+
 	app->PushLayer<ExampleLayer>();
 	app->SetMenubarCallback([app]()
 	{
